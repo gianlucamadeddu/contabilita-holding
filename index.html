@@ -3034,19 +3034,7 @@
             }, 1000);
             
             // Inizializza il sistema
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                // Prima inizializza lo sheet se necessario
-                google.script.run
-                    .withSuccessHandler(function(result) {
-                        console.log('✅ Sheet inizializzato:', result);
-                    })
-                    .withFailureHandler(function(error) {
-                        console.error('⚠️ Errore inizializzazione sheet:', error);
-                    })
-                    .inizializzaSheet();
-            }
-        });
-
+           
         // Gestione chiusura pagina
         window.addEventListener('beforeunload', function() {
             if (datiGlobali.autoRefreshInterval) {
