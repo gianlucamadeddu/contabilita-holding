@@ -770,6 +770,28 @@
             }
         }
     </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, updateDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // La tua configurazione Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVSeQSqdJmFDz8dCDcOhRziRTaM16CKo",
+            authDomain: "contabilita-holding.firebaseapp.com",
+            projectId: "contabilita-holding",
+            storageBucket: "contabilita-holding.firebasestorage.app",
+            messagingSenderId: "904081916878",
+            appId: "1:904081916878:web:f6bae7b7efcc9503e6e19f"
+        };
+
+        // Inizializza Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Rendi disponibili globally
+        window.firebase = { app, db, collection, addDoc, getDocs, onSnapshot, updateDoc, deleteDoc, doc };
+    </script>
 </head>
 <body>
     <!-- LOADING OVERLAY -->
@@ -1733,25 +1755,84 @@
         let isBackendConnected = false;
 
         function checkBackendConnection() {
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                isBackendConnected = true;
-                document.getElementById('connection-status').innerHTML = '✅ Sistema collegato a Google Sheets! Dati sincronizzati in tempo reale.';
-                document.getElementById('connection-status').className = 'connection-status';
+    if (typeof window.firebase !== 'undefined' && window.firebase.db) {
+        isBackendConnected = true;
+        document.getElementById('connection-status').innerHTML = '✅ Sistema collegato a Firebase! Dati sincronizzati in tempo reale.';
+        document.getElementById('connection-status').className = 'connection-status';
+        
+        // Avvia auto-refresh
+        startAutoRefresh();
+        
+        // Carica dati iniziali
+        caricaDatiDaFirebase();
+    } else {
+        isBackendConnected = false;
+        document.getElementById('connection-status').innerHTML = '⚠️ Modalità offline - I dati non verranno salvati permanentemente.';
+        document.getElementById('connection-status').style.background = 'linear-gradient(90deg, #fef3c7, #fde68a)';
+        document.getElementById('connection-status').style.color = '#92400e';
+        
+        // Usa dati di default
+        inizializzaDatiDefault();
+    }
+}
+        // ==========================================
+        // FUNZIONI FIREBASE
+        // ==========================================
+        
+        async function caricaDatiDaFirebase() {
+            try {
+                // Carica movimenti
+                const movimentiRef = window.firebase.collection(window.firebase.db, 'movimenti');
+                const movimentiSnap = await window.firebase.getDocs(movimentiRef);
+                datiGlobali.movimenti = [];
+                movimentiSnap.forEach((doc) => {
+                    datiGlobali.movimenti.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Carica saldi
+                const saldiRef = window.firebase.collection(window.firebase.db, 'saldi');
+                const saldiSnap = await window.firebase.getDocs(saldiRef);
+                if (saldiSnap.empty) {
+                    inizializzaDatiDefault();
+                } else {
+                    saldiSnap.forEach((doc) => {
+                        datiGlobali.saldi[doc.id] = doc.data();
+                    });
+                }
+
+                // Ricalcola riepiloghi
+                ricalcolaRiepiloghi();
                 
-                // Avvia auto-refresh
-                startAutoRefresh();
+                // Aggiorna tutto
+                aggiornaInteroDashboard();
                 
-                // Carica dati iniziali
-                caricaDatiDaBackend();
-            } else {
-                isBackendConnected = false;
-                document.getElementById('connection-status').innerHTML = '⚠️ Modalità offline - I dati non verranno salvati permanentemente.';
-                document.getElementById('connection-status').style.background = 'linear-gradient(90deg, #fef3c7, #fde68a)';
-                document.getElementById('connection-status').style.color = '#92400e';
-                
-                // Usa dati di default
+                console.log('✅ Dati caricati da Firebase');
+            } catch (error) {
+                console.error('❌ Errore caricamento Firebase:', error);
                 inizializzaDatiDefault();
             }
+        }
+
+        async function salvaMovimentoFirebase(movimento) {
+            try {
+                // Salva movimento
+                const movimentiRef = window.firebase.collection(window.firebase.db, 'movimenti');
+                await window.firebase.addDoc(movimentiRef, movimento);
+                
+                // Aggiorna saldo
+                const contoRef = window.firebase.doc(window.firebase.db, 'saldi', movimento.banca);
+                const saldoAttuale = datiGlobali.saldi[movimento.banca]?.saldo || 0;
+                const nuovoSaldo = movimento.tipo === 'Entrata' ? 
+                    saldoAttuale + movimento.importo : 
+                    saldoAttuale - movimento.importo;
+                    
+                await window.firebase.updateDoc(contoRef, { saldo: nuovoSaldo });
+                
+                console.log('✅ Movimento salvato su Firebase');
+                return true;
+            } catch (error) {
+                console.error('❌ Errore salvataggio Firebase:', error);
+                return
         }
 
         function mostraLoading(show = true) {
@@ -2747,26 +2828,28 @@
                 btnSalva.disabled = true;
                 
                 if (isBackendConnected) {
-                    aggiornaSyncIndicator('syncing');
-                    google.script.run
-                        .withSuccessHandler(function(result) {
-                            mostraSuccesso(`✅ Movimento registrato con successo! ${movimento.tipo} di €${movimento.importo.toFixed(2)} - ${movimento.fornitore}`);
-                            
-                            // Reset form
-                            document.getElementById('form-movimento').reset();
-                            document.getElementById('movimento-data').value = new Date().toISOString().split('T')[0];
-                            document.getElementById('movimento-iva-importo').value = '';
-                            
-                            btnSalva.disabled = false;
-                            
-                            // Ricarica dati
-                            caricaDatiDaBackend();
-                        })
-                        .withFailureHandler(function(error) {
-                            mostraErrore('Errore nel salvataggio: ' + error);
-                            aggiornaSyncIndicator('error');
-                            btnSalva.disabled = false;
-                        })
+                  aggiornaSyncIndicator('syncing');
+                
+                salvaMovimentoFirebase(movimento).then(function(success) {
+                    if (success) {
+                        mostraSuccesso(`✅ Movimento registrato con successo! ${movimento.tipo} di €${movimento.importo.toFixed(2)} - ${movimento.fornitore}`);
+                        
+                        // Reset form
+                        document.getElementById('form-movimento').reset();
+                        document.getElementById('movimento-data').value = new Date().toISOString().split('T')[0];
+                        document.getElementById('movimento-iva-importo').value = '';
+                        
+                        btnSalva.disabled = false;
+                        aggiornaSyncIndicator('synced');
+                        
+                        // Ricarica dati
+                        caricaDatiDaFirebase();
+                    } else {
+                        mostraErrore('Errore nel salvataggio del movimento');
+                        aggiornaSyncIndicator('error');
+                        btnSalva.disabled = false;
+                    }
+                });
                         .salvaMovimento(movimento);
                 } else {
                     // Modalità offline
