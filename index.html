@@ -1,0 +1,2976 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 Sistema Contabilità Multi-Aziendale</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .logo-text h1 {
+            color: #1f2937;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .header-info {
+            text-align: right;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        /* SYNC INDICATOR */
+        .sync-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            z-index: 1001;
+        }
+
+        .sync-indicator.syncing {
+            background: linear-gradient(90deg, #fef3c7, #fde68a);
+            color: #92400e;
+        }
+
+        .sync-indicator.synced {
+            background: linear-gradient(90deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+        }
+
+        .sync-indicator.error {
+            background: linear-gradient(90deg, #fee2e2, #fecaca);
+            color: #991b1b;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sync-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        /* NAVIGATION */
+        .nav-container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .nav-btn {
+            background: linear-gradient(45deg, #f3f4f6, #e5e7eb);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            color: white;
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 2rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* CONNECTION STATUS */
+        .connection-status {
+            background: linear-gradient(90deg, #d1fae5, #a7f3d0);
+            border-left: 5px solid #10b981;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        /* LOADING OVERLAY */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        /* NOTIFICATION */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1002;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* INDICATORI PRINCIPALI */
+        .indicatori-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .indicatore-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .indicatore-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .indicatore-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+        }
+
+        .card-liquidita::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .card-disponibile::before {
+            background: linear-gradient(90deg, #059669, #10b981);
+        }
+
+        .card-iva::before {
+            background: linear-gradient(90deg, #dc2626, #f87171);
+        }
+
+        .card-ritenute::before {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .indicatore-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .indicatore-icon {
+            font-size: 2rem;
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+        }
+
+        .icon-liquidita { background: linear-gradient(45deg, #10b981, #34d399); }
+        .icon-disponibile { background: linear-gradient(45deg, #059669, #10b981); }
+        .icon-iva { background: linear-gradient(45deg, #dc2626, #f87171); }
+        .icon-ritenute { background: linear-gradient(45deg, #f59e0b, #fbbf24); }
+
+        .indicatore-valore {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .indicatore-label {
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        .indicatore-dettaglio {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+
+        /* GRAFICI SALDI */
+        .grafici-saldi {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .grafico-azienda {
+            margin-bottom: 2rem;
+        }
+
+        .grafico-azienda h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .barra-saldo {
+            background: #e5e7eb;
+            border-radius: 10px;
+            height: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .barra-fill {
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 1rem;
+            color: white;
+            font-weight: 700;
+            transition: width 0.5s ease;
+        }
+
+        .barra-digital { background: linear-gradient(45deg, #10b981, #34d399); }
+        .barra-finup { background: linear-gradient(45deg, #4f46e5, #7c3aed); }
+        .barra-gierre { background: linear-gradient(45deg, #f59e0b, #fbbf24); }
+
+        /* SEZIONI */
+        .saldi-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .attivita-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .attivita-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .attivita-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .attivita-nome {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .attivita-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-valore {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-entrate { color: #10b981; }
+        .stat-uscite { color: #dc2626; }
+        .stat-saldo { color: #4f46e5; }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* FORM STYLES */
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #10b981, #34d399);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f59e0b, #fbbf24);
+        }
+
+        .btn-export {
+            background: linear-gradient(45deg, #059669, #10b981);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .success-message {
+            background: linear-gradient(90deg, #d1fae5, #a7f3d0);
+            border-left: 5px solid #10b981;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            color: #065f46;
+            font-weight: 600;
+            display: none;
+        }
+
+        .error-message {
+            background: linear-gradient(90deg, #fee2e2, #fecaca);
+            border-left: 5px solid #dc2626;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            color: #991b1b;
+            font-weight: 600;
+            display: none;
+        }
+
+        /* FILTRI MOVIMENTI */
+        .filtri-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .filtri-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        /* TABELLA MOVIMENTI */
+        .tabella-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .tabella-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .tabella-movimenti {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .tabella-movimenti th,
+        .tabella-movimenti td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tabella-movimenti th {
+            background: linear-gradient(45deg, #f3f4f6, #e5e7eb);
+            font-weight: 600;
+            color: #374151;
+            position: sticky;
+            top: 0;
+        }
+
+        .tabella-movimenti tbody tr:hover {
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .movimento-entrata {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .movimento-uscita {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6b7280, #9ca3af);
+        }
+
+        /* CALCOLO IVA */
+        .iva-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .iva-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .iva-card {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .iva-valore {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .iva-credito { color: #10b981; }
+        .iva-debito { color: #dc2626; }
+        .iva-saldo { color: #4f46e5; }
+
+        /* RITENUTE SECTION */
+        .ritenute-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .ritenuta-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-left: 5px solid #f59e0b;
+        }
+
+        .ritenuta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .ritenuta-dettagli {
+            display: grid;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .ritenuta-totale {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f59e0b;
+            margin-top: 1rem;
+            text-align: right;
+        }
+
+        /* PREVISIONALI SECTION */
+        .previsionale-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .previsionale-form {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .simulazione-risultati {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .simulazione-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 10px;
+        }
+
+        .simulazione-azienda {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .simulazione-valore {
+            font-weight: 700;
+        }
+
+        .valore-positivo { color: #10b981; }
+        .valore-negativo { color: #dc2626; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .indicatori-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.4rem;
+            }
+
+            .previsionale-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sync-indicator {
+                top: auto;
+                bottom: 70px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Caricamento dati...</p>
+        </div>
+    </div>
+
+    <!-- SYNC INDICATOR -->
+    <div class="sync-indicator synced" id="sync-indicator">
+        <i class="fas fa-sync sync-icon" id="sync-icon"></i>
+        <span id="sync-text">Sincronizzato</span>
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div class="notification" id="notification"></div>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Dashboard Holding</h1>
+                    <p>Sistema Gestionale Completo</p>
+                </div>
+            </div>
+            <div class="header-info">
+                <div>📅 Ultimo aggiornamento: <span id="ultimo-aggiornamento">Caricamento...</span></div>
+                <div>👥 Accesso: Manager e Daniela</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav class="nav-container">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="mostraSezione('dashboard', event)">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </button>
+            <button class="nav-btn" onclick="mostraSezione('saldi', event)">
+                <i class="fas fa-university"></i> Saldi Bancari
+            </button>
+            <button class="nav-btn" onclick="mostraSezione('movimenti', event)">
+                <i class="fas fa-exchange-alt"></i> Movimenti
+            </button>
+            <button class="nav-btn" onclick="mostraSezione('input', event)">
+                <i class="fas fa-pencil-alt"></i> Input Daniela
+            </button>
+            <button class="nav-btn" onclick="mostraSezione('iva', event)">
+                <i class="fas fa-calculator"></i> Calcolo IVA
+            </button>
+            <button class="nav-btn" onclick="mostraSezione('ritenute', event)">
+                <i class="fas fa-hand-holding-usd"></i> Ritenute Acconto
+            </button>
+            <button class="nav-btn" onclick="mostraSezione('previsionali', event)">
+                <i class="fas fa-chart-area"></i> Previsionali
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+        <!-- CONNECTION STATUS -->
+        <div class="connection-status" id="connection-status">
+            ⏳ Connessione al sistema in corso...
+        </div>
+
+        <!-- DASHBOARD SECTION -->
+        <div class="section active" id="dashboard-section">
+            <!-- INDICATORI PRINCIPALI -->
+            <div class="indicatori-grid">
+                <div class="indicatore-card card-liquidita">
+                    <div class="indicatore-header">
+                        <div class="indicatore-icon icon-liquidita">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    <div class="indicatore-valore" id="liquidita-totale">€0,00</div>
+                    <div class="indicatore-label">💰 Liquidità Totale</div>
+                </div>
+
+                <div class="indicatore-card card-disponibile">
+                    <div class="indicatore-header">
+                        <div class="indicatore-icon icon-disponibile">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="indicatore-valore" id="disponibile-netto">€0,00</div>
+                    <div class="indicatore-label">✅ Disponibile Netto</div>
+                </div>
+
+                <div class="indicatore-card card-iva">
+                    <div class="indicatore-header">
+                        <div class="indicatore-icon icon-iva">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                    <div class="indicatore-valore" id="iva-totale">€0,00</div>
+                    <div class="indicatore-label">⚠️ IVA da Versare</div>
+                    <div class="indicatore-dettaglio">
+                        Debito: €<span id="dash-iva-debito">0,00</span> - 
+                        Credito: €<span id="dash-iva-credito">0,00</span>
+                    </div>
+                </div>
+
+                <div class="indicatore-card card-ritenute">
+                    <div class="indicatore-header">
+                        <div class="indicatore-icon icon-ritenute">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                    </div>
+                    <div class="indicatore-valore" id="ritenute-totale">€0,00</div>
+                    <div class="indicatore-label">📋 Ritenute da Versare</div>
+                </div>
+            </div>
+
+            <!-- GRAFICI SALDI AZIENDE -->
+            <div class="grafici-saldi">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Saldi per Azienda
+                </h2>
+                
+                <div class="grafico-azienda">
+                    <h3>🏢 Digital Credit Italia SRL</h3>
+                    <div class="barra-saldo">
+                        <div class="barra-fill barra-digital" id="barra-digital" style="width: 0%">
+                            €0,00
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grafico-azienda">
+                    <h3>🏢 FIN UP</h3>
+                    <div class="barra-saldo">
+                        <div class="barra-fill barra-finup" id="barra-finup" style="width: 0%">
+                            €0,00
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grafico-azienda">
+                    <h3>🏢 Gierre SRL</h3>
+                    <div class="barra-saldo">
+                        <div class="barra-fill barra-gierre" id="barra-gierre" style="width: 0%">
+                            €0,00
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIEPILOGO ATTIVITÀ -->
+            <div class="saldi-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Riepilogo Attività Mensile
+                </h2>
+                <div class="attivita-grid">
+                    <div class="attivita-card">
+                        <div class="attivita-nome">DIGITAL CREDIT ITALIA SRL</div>
+                        <div class="attivita-stats">
+                            <div class="stat-item">
+                                <div class="stat-valore stat-entrate" id="digital-entrate">€0</div>
+                                <div class="stat-label">Entrate</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-uscite" id="digital-uscite">€0</div>
+                                <div class="stat-label">Uscite</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-saldo" id="digital-saldo">€0</div>
+                                <div class="stat-label">Saldo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="attivita-card">
+                        <div class="attivita-nome">FIN UP</div>
+                        <div class="attivita-stats">
+                            <div class="stat-item">
+                                <div class="stat-valore stat-entrate" id="finup-entrate">€0</div>
+                                <div class="stat-label">Entrate</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-uscite" id="finup-uscite">€0</div>
+                                <div class="stat-label">Uscite</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-saldo" id="finup-saldo">€0</div>
+                                <div class="stat-label">Saldo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="attivita-card">
+                        <div class="attivita-nome">GIERRE SRL</div>
+                        <div class="attivita-stats">
+                            <div class="stat-item">
+                                <div class="stat-valore stat-entrate" id="gierre-entrate">€0</div>
+                                <div class="stat-label">Entrate</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-uscite" id="gierre-uscite">€0</div>
+                                <div class="stat-label">Uscite</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-saldo" id="gierre-saldo">€0</div>
+                                <div class="stat-label">Saldo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALDI BANCARI SECTION -->
+        <div class="section" id="saldi-section">
+            <div class="saldi-section">
+                <h2 class="section-title">
+                    <i class="fas fa-university"></i>
+                    Saldi Bancari Dettagliati - Tutte le Società
+                </h2>
+                
+                <!-- DIGITAL CREDIT ITALIA SRL -->
+                <h3 style="color: #10b981; margin-bottom: 1rem; border-bottom: 2px solid #10b981; padding-bottom: 0.5rem;">🏢 DIGITAL CREDIT ITALIA SRL</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-radius: 15px; padding: 1.5rem; border-left: 5px solid #10b981;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 1rem;">🏦 BANCO DI SARDEGNA</div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Saldo Attuale:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="digital-banco-saldo">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">IVA da Pagare:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="digital-banco-iva">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Disponibile:</span>
+                            <span style="font-weight: 700; color: #10b981;" id="digital-banco-disponibile">€0,00</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-radius: 15px; padding: 1.5rem; border-left: 5px solid #059669;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 1rem;">💳 REVOLUT</div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Saldo Attuale:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="digital-revolut-saldo">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">IVA da Pagare:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="digital-revolut-iva">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Disponibile:</span>
+                            <span style="font-weight: 700; color: #10b981;" id="digital-revolut-disponibile">€0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIN UP -->
+                <h3 style="color: #4f46e5; margin-bottom: 1rem; border-bottom: 2px solid #4f46e5; padding-bottom: 0.5rem;">🏢 FIN UP</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 15px; padding: 1.5rem; border-left: 5px solid #4f46e5;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 1rem;">🏦 BANCO DI SARDEGNA</div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Saldo Attuale:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="finup-banco-saldo">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">IVA da Pagare:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="finup-banco-iva">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Disponibile:</span>
+                            <span style="font-weight: 700; color: #dc2626;" id="finup-banco-disponibile">€0,00</span>
+                        </div>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 15px; padding: 1.5rem; border-left: 5px solid #7c3aed;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 1rem;">💳 REVOLUT</div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Saldo Attuale:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="finup-revolut-saldo">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">IVA da Pagare:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="finup-revolut-iva">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Disponibile:</span>
+                            <span style="font-weight: 700; color: #10b981;" id="finup-revolut-disponibile">€0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GIERRE -->
+                <h3 style="color: #f59e0b; margin-bottom: 1rem; border-bottom: 2px solid #f59e0b; padding-bottom: 0.5rem;">🏢 GIERRE SRL</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); border-radius: 15px; padding: 1.5rem; border-left: 5px solid #f59e0b;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 1rem;">💳 SUM UP DI GIERRE</div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Saldo Attuale:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="gierre-sumup-saldo">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">IVA da Pagare:</span>
+                            <span style="font-weight: 600; color: #1f2937;" id="gierre-sumup-iva">€0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #6b7280; font-size: 0.9rem;">Disponibile:</span>
+                            <span style="font-weight: 700; color: #f59e0b;" id="gierre-sumup-disponibile">€0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOTALE GENERALE -->
+                <div style="background: linear-gradient(135deg, #1f2937, #374151); border-radius: 20px; padding: 2rem; color: white; text-align: center;">
+                    <h3 style="color: white; margin-bottom: 1rem;">💰 TOTALE GENERALE - HOLDING</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+                        <div>
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;" id="saldi-liquidita-totale">€0,00</div>
+                            <div style="color: #d1d5db;">Liquidità Totale</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;" id="saldi-iva-totale">€0,00</div>
+                            <div style="color: #d1d5db;">IVA da Pagare</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: #10b981;" id="saldi-disponibile-totale">€0,00</div>
+                            <div style="color: #d1d5db;">Disponibile Netto</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOVIMENTI SECTION -->
+        <div class="section" id="movimenti-section">
+            <!-- FILTRI -->
+            <div class="filtri-container">
+                <h3 class="section-title">
+                    <i class="fas fa-filter"></i>
+                    Filtri Ricerca Movimenti
+                </h3>
+                <div class="filtri-grid">
+                    <div class="form-group">
+                        <label class="form-label">📅 Da Data</label>
+                        <input type="date" class="form-input" id="filtro-data-da">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">📅 A Data</label>
+                        <input type="date" class="form-input" id="filtro-data-a">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🏢 Fornitore/Cliente</label>
+                        <input type="text" class="form-input" id="filtro-fornitore" placeholder="Nome fornitore...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">📊 Tipo</label>
+                        <select class="form-input" id="filtro-tipo">
+                            <option value="">Tutti</option>
+                            <option value="Entrata">Entrate</option>
+                            <option value="Uscita">Uscite</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🏦 Società/Banca</label>
+                        <select class="form-input" id="filtro-banca">
+                            <option value="">Tutte</option>
+                            <option value="DIGITAL CREDIT">Digital Credit</option>
+                            <option value="FIN UP">FIN UP</option>
+                            <option value="GIERRE">Gierre SRL</option>
+                            <option value="BANCO">Banco di Sardegna</option>
+                            <option value="REVOLUT">Revolut</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🔍</label>
+                        <button class="btn btn-secondary" onclick="cercaMovimenti()">
+                            <i class="fas fa-search"></i> Cerca
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RISULTATI -->
+            <div class="tabella-container">
+                <div class="tabella-header">
+                    <h3 class="section-title" style="margin: 0;">
+                        <i class="fas fa-list"></i>
+                        Movimenti Trovati (<span id="count-movimenti">0</span>)
+                    </h3>
+                    <button class="btn btn-export" onclick="esportaExcel()">
+                        <i class="fas fa-file-excel"></i> Esporta Excel
+                    </button>
+                </div>
+                
+                <table class="tabella-movimenti" id="tabella-movimenti">
+                    <thead>
+                        <tr>
+                            <th>📅 Data</th>
+                            <th>🏦 Banca</th>
+                            <th>🏢 Fornitore/Cliente</th>
+                            <th>💶 Importo</th>
+                            <th>📊 Tipo</th>
+                            <th>📂 Categoria</th>
+                            <th>📝 Note</th>
+                            <th>💰 IVA</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-movimenti">
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 2rem; color: #6b7280;">
+                                📭 Nessun movimento registrato. Inizia ad inserire i movimenti dalla sezione "Input Daniela".
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- INPUT DANIELA SECTION -->
+        <div class="section" id="input-section">
+            <!-- SUCCESS/ERROR MESSAGES -->
+            <div class="success-message" id="success-message"></div>
+            <div class="error-message" id="error-message"></div>
+
+            <!-- NUOVO MOVIMENTO BANCARIO -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-exchange-alt"></i>
+                    ➕ Nuovo Movimento Bancario
+                </h2>
+                <form id="form-movimento">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">📅 Data *</label>
+                            <input type="date" class="form-input" id="movimento-data" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🏦 Banca/Conto *</label>
+                            <select class="form-input" id="movimento-banca" required>
+                                <option value="">-- Seleziona Conto --</option>
+                                <option value="BANCO DI SARDEGNA - DIGITAL CREDIT">Banco di Sardegna - Digital Credit</option>
+                                <option value="REVOLUT - DIGITAL CREDIT">Revolut - Digital Credit</option>
+                                <option value="BANCO DI SARDEGNA - FIN UP">Banco di Sardegna - FIN UP</option>
+                                <option value="REVOLUT - FIN UP">Revolut - FIN UP</option>
+                                <option value="SUM UP - GIERRE">Sum Up - Gierre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📊 Tipo Movimento *</label>
+                            <select class="form-input" id="movimento-tipo" required>
+                                <option value="">-- Seleziona Tipo --</option>
+                                <option value="Entrata">💰 Entrata</option>
+                                <option value="Uscita">💸 Uscita</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">💶 Importo € *</label>
+                            <input type="number" step="0.01" class="form-input" id="movimento-importo" placeholder="0,00" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🏢 Fornitore/Cliente *</label>
+                        <input type="text" class="form-input" id="movimento-fornitore" placeholder="es. Cliente ABC, Fornitore XYZ" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">📂 Categoria</label>
+                        <select class="form-input" id="movimento-categoria">
+                            <option value="">-- Seleziona Categoria --</option>
+                            <option value="Mediatore Digital Credit">Mediatore Digital Credit</option>
+                            <option value="FIN UP">FIN UP</option>
+                            <option value="Prestito Digitale">Prestito Digitale</option>
+                            <option value="Noleggio Auto">Noleggio Auto</option>
+                            <option value="Scuola">Scuola</option>
+                            <option value="Ristrutturazioni">Ristrutturazioni</option>
+                            <option value="Gierre SRL">Gierre SRL</option>
+                        </select>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">💰 IVA 22% (opzionale)</label>
+                            <select class="form-input" id="movimento-iva-applicata">
+                                <option value="no">No IVA</option>
+                                <option value="si">Con IVA 22%</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">💶 Importo IVA €</label>
+                            <input type="number" step="0.01" class="form-input" id="movimento-iva-importo" placeholder="0,00" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">📝 Note</label>
+                        <input type="text" class="form-input" id="movimento-note" placeholder="es. Fattura n. 123, Commissioni cliente...">
+                    </div>
+                    <button type="submit" class="btn btn-success" id="btn-salva-movimento">
+                        💾 Registra Movimento
+                    </button>
+                </form>
+            </div>
+
+            <!-- INFO SISTEMA -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    ℹ️ Sistema automatico
+                </h2>
+                <div style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-radius: 15px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <p><strong>✅ Aggiornamento Automatico:</strong> Ogni movimento aggiorna tutte le sezioni</p>
+                    <p><strong>📊 Dashboard:</strong> Saldi e grafici aggiornati in tempo reale</p>
+                    <p><strong>💰 Calcolo IVA:</strong> Sistema integrato per gestione IVA</p>
+                    <p><strong>💾 Salvataggio:</strong> Automatico su Google Sheets</p>
+                    <p><strong>🔄 Sincronizzazione:</strong> Aggiornamenti in tempo reale tra utenti</p>
+                </div>
+                
+                <p>💡 <strong>I dati sono condivisi in tempo reale con tutti gli utenti autorizzati!</strong></p>
+            </div>
+        </div>
+
+        <!-- CALCOLO IVA SECTION -->
+        <div class="section" id="iva-section">
+            <!-- GESTIONE IVA PREGRESSA -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Gestione IVA Pregressa
+                </h2>
+                <form id="form-iva-pregressa">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">💶 IVA a Credito Pregressa €</label>
+                            <input type="number" step="0.01" class="form-input" id="iva-credito-pregressa" placeholder="0,00" value="5528.12">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📊 Periodo di Riferimento</label>
+                            <input type="text" class="form-input" id="iva-periodo-riferimento" value="Fino ad Agosto 2025">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📅 Prossima Scadenza</label>
+                            <input type="date" class="form-input" id="iva-prossima-scadenza" value="2025-08-16">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-warning">
+                                💾 Aggiorna IVA Pregressa
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- RIEPILOGO IVA DA VERSARE -->
+            <div class="iva-section">
+                <h2 class="section-title">
+                    <i class="fas fa-calculator"></i>
+                    Calcolo IVA da Versare
+                </h2>
+
+                <div style="background: linear-gradient(135deg, #fee2e2, #fecaca); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; text-align: center;">
+                    <h3 style="color: #991b1b; margin-bottom: 1rem;">⚠️ IVA DA VERSARE ENTRO IL <span id="data-scadenza-iva">16/08/2025</span></h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #dc2626;">€<span id="iva-debito-totale">15.620,00</span></div>
+                            <div style="color: #991b1b;">IVA a Debito</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #10b981;">€<span id="iva-credito-totale">5.528,12</span></div>
+                            <div style="color: #991b1b;">IVA a Credito</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #7c2d12;">€<span id="iva-da-versare">10.091,88</span></div>
+                            <div style="color: #991b1b; font-weight: 600;">DA VERSARE</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIQUIDAZIONE IVA -->
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <button class="btn btn-success" onclick="liquidaIVA()" style="font-size: 1.1rem; padding: 15px 30px;">
+                        💰 LIQUIDA IVA - Registra Pagamento
+                    </button>
+                </div>
+
+                <div class="iva-grid">
+                    <div class="iva-card">
+                        <h3>📥 IVA a Credito (Periodo Corrente)</h3>
+                        <div class="iva-valore iva-credito" id="iva-credito">€0,00</div>
+                        <p style="color: #6b7280;">Da nuove fatture di acquisto</p>
+                    </div>
+
+                    <div class="iva-card">
+                        <h3>📤 IVA a Debito (Periodo Corrente)</h3>
+                        <div class="iva-valore iva-debito" id="iva-debito">€0,00</div>
+                        <p style="color: #6b7280;">Da nuove fatture di vendita</p>
+                    </div>
+
+                    <div class="iva-card">
+                        <h3>💶 Saldo IVA (Periodo Corrente)</h3>
+                        <div class="iva-valore iva-saldo" id="iva-saldo">€0,00</div>
+                        <p style="color: #6b7280;" id="iva-stato">Nuovo Periodo</p>
+                    </div>
+                </div>
+
+                <!-- DETTAGLIO PER AZIENDA -->
+                <h3 class="section-title" style="margin-top: 2rem;">
+                    <i class="fas fa-building"></i>
+                    Dettaglio IVA per Azienda
+                </h3>
+
+                <div class="attivita-grid">
+                    <div class="attivita-card">
+                        <div class="attivita-nome">DIGITAL CREDIT ITALIA SRL</div>
+                        <div class="attivita-stats">
+                            <div class="stat-item">
+                                <div class="stat-valore stat-entrate" id="digital-iva-credito">€0</div>
+                                <div class="stat-label">IVA Credito</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-uscite" id="digital-iva-debito">€0</div>
+                                <div class="stat-label">IVA Debito</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-saldo" id="digital-iva-saldo">€0</div>
+                                <div class="stat-label">Saldo IVA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="attivita-card">
+                        <div class="attivita-nome">FIN UP</div>
+                        <div class="attivita-stats">
+                            <div class="stat-item">
+                                <div class="stat-valore stat-entrate" id="finup-iva-credito">€0</div>
+                                <div class="stat-label">IVA Credito</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-uscite" id="finup-iva-debito">€0</div>
+                                <div class="stat-label">IVA Debito</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-saldo" id="finup-iva-saldo">€0</div>
+                                <div class="stat-label">Saldo IVA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="attivita-card">
+                        <div class="attivita-nome">GIERRE SRL</div>
+                        <div class="attivita-stats">
+                            <div class="stat-item">
+                                <div class="stat-valore stat-entrate" id="gierre-iva-credito">€0</div>
+                                <div class="stat-label">IVA Credito</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-uscite" id="gierre-iva-debito">€0</div>
+                                <div class="stat-label">IVA Debito</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-valore stat-saldo" id="gierre-iva-saldo">€0</div>
+                                <div class="stat-label">Saldo IVA</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STORICO PAGAMENTI IVA -->
+                <h3 class="section-title" style="margin-top: 2rem;">
+                    <i class="fas fa-history"></i>
+                    Storico Pagamenti IVA
+                </h3>
+                <div class="tabella-container">
+                    <table class="tabella-movimenti">
+                        <thead>
+                            <tr>
+                                <th>📅 Data Pagamento</th>
+                                <th>📊 Periodo</th>
+                                <th>💶 Importo Versato</th>
+                                <th>🏦 Conto Utilizzato</th>
+                                <th>📝 Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="storico-pagamenti-iva">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">
+                                    📭 Nessun pagamento IVA registrato
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RITENUTE ACCONTO SECTION -->
+        <div class="section" id="ritenute-section">
+            <!-- NUOVO COLLABORATORE -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user-plus"></i>
+                    ➕ Nuovo Collaboratore
+                </h2>
+                <form id="form-collaboratore">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">👤 Nome Collaboratore *</label>
+                            <input type="text" class="form-input" id="collab-nome" placeholder="Nome e Cognome" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🏢 Società *</label>
+                            <select class="form-input" id="collab-societa" required>
+                                <option value="">-- Seleziona Società --</option>
+                                <option value="DIGITAL CREDIT">Digital Credit Italia SRL</option>
+                                <option value="FIN UP">FIN UP</option>
+                                <option value="GIERRE">Gierre SRL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">💶 Compenso Lordo €</label>
+                            <input type="number" step="0.01" class="form-input" id="collab-compenso" placeholder="0,00" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📅 Data Pagamento</label>
+                            <input type="date" class="form-input" id="collab-data" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        💾 Registra Collaboratore
+                    </button>
+                </form>
+            </div>
+
+            <!-- RIEPILOGO RITENUTE -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    Riepilogo Ritenute d'Acconto
+                </h2>
+
+                <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; text-align: center;">
+                    <h3 style="color: #92400e; margin-bottom: 1rem;">📋 RITENUTE DA VERSARE</h3>
+                    <div style="font-size: 2.5rem; font-weight: 700; color: #f59e0b;">
+                        €<span id="ritenute-totale-da-versare">0,00</span>
+                    </div>
+                    <div style="color: #92400e; margin-top: 0.5rem;">
+                        Scadenza: 16 del mese successivo
+                    </div>
+                </div>
+
+                <!-- LISTA COLLABORATORI -->
+                <div class="ritenute-grid" id="lista-collaboratori">
+                    <div style="text-align: center; padding: 2rem; color: #6b7280; grid-column: 1 / -1;">
+                        📭 Nessun collaboratore registrato
+                    </div>
+                </div>
+
+                <!-- LIQUIDAZIONE RITENUTE -->
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn btn-warning" onclick="liquidaRitenute()">
+                        💰 LIQUIDA RITENUTE - Registra Pagamento F24
+                    </button>
+                </div>
+            </div>
+
+            <!-- STORICO PAGAMENTI RITENUTE -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-history"></i>
+                    Storico Pagamenti Ritenute
+                </h3>
+                <div class="tabella-container">
+                    <table class="tabella-movimenti">
+                        <thead>
+                            <tr>
+                                <th>📅 Data Pagamento</th>
+                                <th>📊 Periodo</th>
+                                <th>💶 Importo Versato</th>
+                                <th>👥 N° Collaboratori</th>
+                                <th>📝 Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="storico-pagamenti-ritenute">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">
+                                    📭 Nessun pagamento ritenute registrato
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREVISIONALI SECTION -->
+        <div class="section" id="previsionali-section">
+            <div class="previsionale-container">
+                <!-- FORM PREVISIONALI -->
+                <div class="previsionale-form">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-area"></i>
+                        ➕ Aggiungi Previsionale
+                    </h2>
+                    <form id="form-previsionale">
+                        <div class="form-group">
+                            <label class="form-label">🏢 Società *</label>
+                            <select class="form-input" id="prev-societa" required>
+                                <option value="">-- Seleziona Società --</option>
+                                <option value="DIGITAL CREDIT">Digital Credit Italia SRL</option>
+                                <option value="FIN UP">FIN UP</option>
+                                <option value="GIERRE">Gierre SRL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📊 Tipo Movimento *</label>
+                            <select class="form-input" id="prev-tipo" required>
+                                <option value="">-- Seleziona Tipo --</option>
+                                <option value="Entrata">💰 Entrata Prevista</option>
+                                <option value="Uscita">💸 Uscita Prevista</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">💶 Importo € *</label>
+                            <input type="number" step="0.01" class="form-input" id="prev-importo" placeholder="0,00" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📅 Data Prevista *</label>
+                            <input type="date" class="form-input" id="prev-data" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">📝 Descrizione</label>
+                            <input type="text" class="form-input" id="prev-descrizione" placeholder="es. Incasso cliente ABC, Pagamento fornitore...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🎯 Probabilità %</label>
+                            <select class="form-input" id="prev-probabilita">
+                                <option value="100">100% - Certo</option>
+                                <option value="80">80% - Molto Probabile</option>
+                                <option value="60">60% - Probabile</option>
+                                <option value="40">40% - Incerto</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            📊 Aggiungi al Previsionale
+                        </button>
+                    </form>
+                </div>
+
+                <!-- SIMULAZIONE RISULTATI -->
+                <div class="simulazione-risultati">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        📈 Simulazione Saldi Futuri
+                    </h2>
+                    
+                    <div id="simulazione-saldi">
+                        <div class="simulazione-item">
+                            <span class="simulazione-azienda">Digital Credit Italia SRL</span>
+                            <span class="simulazione-valore valore-positivo" id="sim-digital">€0,00</span>
+                        </div>
+                        <div class="simulazione-item">
+                            <span class="simulazione-azienda">FIN UP</span>
+                            <span class="simulazione-valore valore-positivo" id="sim-finup">€0,00</span>
+                        </div>
+                        <div class="simulazione-item">
+                            <span class="simulazione-azienda">Gierre SRL</span>
+                            <span class="simulazione-valore valore-positivo" id="sim-gierre">€0,00</span>
+                        </div>
+                        <div class="simulazione-item" style="background: linear-gradient(135deg, #1f2937, #374151); color: white;">
+                            <span class="simulazione-azienda" style="color: white;">TOTALE HOLDING</span>
+                            <span class="simulazione-valore" style="color: #10b981;" id="sim-totale">€0,00</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="calcolaSimulazione()">
+                            🔄 Ricalcola Simulazione
+                        </button>
+                        <button class="btn btn-warning" onclick="resettaPrevisionale()">
+                            🗑️ Resetta Previsionale
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABELLA PREVISIONALI -->
+            <div class="tabella-container" style="margin-top: 2rem;">
+                <h3 class="section-title">
+                    <i class="fas fa-list"></i>
+                    Movimenti Previsionali
+                </h3>
+                
+                <table class="tabella-movimenti">
+                    <thead>
+                        <tr>
+                            <th>📅 Data</th>
+                            <th>🏢 Società</th>
+                            <th>📝 Descrizione</th>
+                            <th>💶 Importo</th>
+                            <th>📊 Tipo</th>
+                            <th>🎯 Probabilità</th>
+                            <th>⚙️ Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-previsionali">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 2rem; color: #6b7280;">
+                                📭 Nessun movimento previsionale inserito
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // STRUTTURA DATI GLOBALE
+        // ==========================================
+        const datiGlobali = {
+            movimenti: [],
+            movimentiFiltrati: [],
+            saldi: {},
+            iva: {
+                'DIGITAL CREDIT': { credito: 0, debito: 0 },
+                'FIN UP': { credito: 0, debito: 0 },
+                'GIERRE': { credito: 0, debito: 0 }
+            },
+            ivaPregressa: {
+                credito: 5528.12,
+                debito: 15620,
+                periodo: 'Fino ad Agosto 2025',
+                scadenza: '2025-08-16'
+            },
+            storicoIva: [],
+            riepilogo: {
+                'DIGITAL CREDIT': { entrate: 0, uscite: 0 },
+                'FIN UP': { entrate: 0, uscite: 0 },
+                'GIERRE': { entrate: 0, uscite: 0 }
+            },
+            collaboratori: [],
+            ritenute: {
+                totale: 0,
+                collaboratoriAttivi: []
+            },
+            storicoRitenute: [],
+            previsionali: [],
+            lastSync: null,
+            autoRefreshInterval: null
+        };
+
+        // ==========================================
+        // GESTIONE BACKEND
+        // ==========================================
+        let isBackendConnected = false;
+
+        function checkBackendConnection() {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                isBackendConnected = true;
+                document.getElementById('connection-status').innerHTML = '✅ Sistema collegato a Google Sheets! Dati sincronizzati in tempo reale.';
+                document.getElementById('connection-status').className = 'connection-status';
+                
+                // Avvia auto-refresh
+                startAutoRefresh();
+                
+                // Carica dati iniziali
+                caricaDatiDaBackend();
+            } else {
+                isBackendConnected = false;
+                document.getElementById('connection-status').innerHTML = '⚠️ Modalità offline - I dati non verranno salvati permanentemente.';
+                document.getElementById('connection-status').style.background = 'linear-gradient(90deg, #fef3c7, #fde68a)';
+                document.getElementById('connection-status').style.color = '#92400e';
+                
+                // Usa dati di default
+                inizializzaDatiDefault();
+            }
+        }
+
+        function mostraLoading(show = true) {
+            document.getElementById('loading-overlay').classList.toggle('active', show);
+        }
+
+        function aggiornaSyncIndicator(stato) {
+            const indicator = document.getElementById('sync-indicator');
+            const icon = document.getElementById('sync-icon');
+            const text = document.getElementById('sync-text');
+            
+            indicator.classList.remove('syncing', 'synced', 'error');
+            icon.classList.remove('spinning');
+            
+            switch(stato) {
+                case 'syncing':
+                    indicator.classList.add('syncing');
+                    icon.classList.add('spinning');
+                    text.textContent = 'Sincronizzazione...';
+                    break;
+                case 'synced':
+                    indicator.classList.add('synced');
+                    text.textContent = 'Sincronizzato';
+                    break;
+                case 'error':
+                    indicator.classList.add('error');
+                    text.textContent = 'Errore sincronizzazione';
+                    break;
+            }
+        }
+
+        function mostraNotifica(messaggio, tipo = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = messaggio;
+            notification.className = `notification show ${tipo}`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // ==========================================
+        // CARICAMENTO DATI DA BACKEND
+        // ==========================================
+        function caricaDatiDaBackend() {
+            if (!isBackendConnected) {
+                inizializzaDatiDefault();
+                return;
+            }
+            
+            mostraLoading(true);
+            aggiornaSyncIndicator('syncing');
+            
+            google.script.run
+                .withSuccessHandler(function(dati) {
+                    // Aggiorna dati globali
+                    if (dati.movimenti) datiGlobali.movimenti = dati.movimenti;
+                    if (dati.saldi) datiGlobali.saldi = dati.saldi;
+                    if (dati.ivaPregressa) datiGlobali.ivaPregressa = dati.ivaPregressa;
+                    if (dati.collaboratori) datiGlobali.collaboratori = dati.collaboratori;
+                    if (dati.storicoIva) datiGlobali.storicoIva = dati.storicoIva;
+                    if (dati.storicoRitenute) datiGlobali.storicoRitenute = dati.storicoRitenute;
+                    if (dati.previsionali) datiGlobali.previsionali = dati.previsionali;
+                    
+                    // Ricalcola riepiloghi
+                    ricalcolaRiepiloghi();
+                    
+                    // Aggiorna tutto
+                    aggiornaInteroDashboard();
+                    
+                    // Aggiorna ultimo sync
+                    datiGlobali.lastSync = new Date();
+                    aggiornaUltimoAggiornamento();
+                    
+                    mostraLoading(false);
+                    aggiornaSyncIndicator('synced');
+                    console.log('✅ Dati caricati con successo dal backend');
+                })
+                .withFailureHandler(function(error) {
+                    console.error('❌ Errore caricamento dati:', error);
+                    mostraLoading(false);
+                    aggiornaSyncIndicator('error');
+                    mostraNotifica('Errore nel caricamento dati: ' + error, 'error');
+                    
+                    // Usa dati di default
+                    inizializzaDatiDefault();
+                })
+                .caricaDatiCompleti();
+        }
+
+        function inizializzaDatiDefault() {
+            // Inizializza con saldi di default
+            datiGlobali.saldi = {
+                'BANCO DI SARDEGNA - DIGITAL CREDIT': { saldo: 7941.21, iva: 0 },
+                'REVOLUT - DIGITAL CREDIT': { saldo: 373.65, iva: 0 },
+                'BANCO DI SARDEGNA - FIN UP': { saldo: 12629.38, iva: 0 },
+                'REVOLUT - FIN UP': { saldo: 19489.37, iva: 0 },
+                'SUM UP - GIERRE': { saldo: 1036.52, iva: 0 }
+            };
+            
+            aggiornaInteroDashboard();
+            aggiornaUltimoAggiornamento();
+        }
+
+        function ricalcolaRiepiloghi() {
+            // Resetta riepiloghi
+            Object.keys(datiGlobali.riepilogo).forEach(azienda => {
+                datiGlobali.riepilogo[azienda].entrate = 0;
+                datiGlobali.riepilogo[azienda].uscite = 0;
+            });
+            
+            Object.keys(datiGlobali.iva).forEach(azienda => {
+                datiGlobali.iva[azienda].credito = 0;
+                datiGlobali.iva[azienda].debito = 0;
+            });
+            
+            // Ricalcola da movimenti
+            datiGlobali.movimenti.forEach(mov => {
+                const azienda = determinaAzienda(mov.banca);
+                
+                if (mov.tipo === 'Entrata') {
+                    datiGlobali.riepilogo[azienda].entrate += mov.importo;
+                    if (mov.iva > 0) {
+                        datiGlobali.iva[azienda].debito += mov.iva;
+                    }
+                } else {
+                    datiGlobali.riepilogo[azienda].uscite += mov.importo;
+                    if (mov.iva > 0) {
+                        datiGlobali.iva[azienda].credito += mov.iva;
+                    }
+                }
+            });
+            
+            // Calcola totale ritenute
+            let totaleRitenute = 0;
+            datiGlobali.collaboratori.forEach(collab => {
+                const ritenuta = collab.ritenuta || (collab.compenso * 0.20);
+                totaleRitenute += ritenuta;
+            });
+            datiGlobali.ritenute.totale = totaleRitenute;
+        }
+
+        // ==========================================
+        // AUTO-REFRESH
+        // ==========================================
+        function startAutoRefresh() {
+            // Cancella interval esistente
+            if (datiGlobali.autoRefreshInterval) {
+                clearInterval(datiGlobali.autoRefreshInterval);
+            }
+            
+            // Aggiorna ogni 30 secondi
+            datiGlobali.autoRefreshInterval = setInterval(() => {
+                if (isBackendConnected) {
+                    console.log('🔄 Auto-refresh in corso...');
+                    caricaDatiSilenzioso();
+                }
+            }, 30000); // 30 secondi
+        }
+
+        function caricaDatiSilenzioso() {
+            if (!isBackendConnected) return;
+            
+            google.script.run
+                .withSuccessHandler(function(dati) {
+                    // Controlla se ci sono nuovi movimenti
+                    const numMovimentiPrima = datiGlobali.movimenti.length;
+                    
+                    // Aggiorna dati
+                    if (dati.movimenti) datiGlobali.movimenti = dati.movimenti;
+                    if (dati.saldi) datiGlobali.saldi = dati.saldi;
+                    if (dati.ivaPregressa) datiGlobali.ivaPregressa = dati.ivaPregressa;
+                    if (dati.collaboratori) datiGlobali.collaboratori = dati.collaboratori;
+                    if (dati.storicoIva) datiGlobali.storicoIva = dati.storicoIva;
+                    if (dati.storicoRitenute) datiGlobali.storicoRitenute = dati.storicoRitenute;
+                    if (dati.previsionali) datiGlobali.previsionali = dati.previsionali;
+                    
+                    // Ricalcola riepiloghi
+                    ricalcolaRiepiloghi();
+                    
+                    // Aggiorna tutto
+                    aggiornaInteroDashboard();
+                    
+                    // Notifica se ci sono nuovi movimenti
+                    if (dati.movimenti && dati.movimenti.length > numMovimentiPrima) {
+                        const nuoviMovimenti = dati.movimenti.length - numMovimentiPrima;
+                        mostraNotifica(`📢 ${nuoviMovimenti} nuovi movimenti aggiunti!`, 'success');
+                    }
+                    
+                    // Aggiorna ultimo sync
+                    datiGlobali.lastSync = new Date();
+                    aggiornaUltimoAggiornamento();
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Errore auto-refresh:', error);
+                })
+                .caricaDatiCompleti();
+        }
+
+        function aggiornaUltimoAggiornamento() {
+            const elemento = document.getElementById('ultimo-aggiornamento');
+            if (datiGlobali.lastSync) {
+                const data = datiGlobali.lastSync.toLocaleDateString('it-IT');
+                const ora = datiGlobali.lastSync.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                elemento.textContent = `${data} alle ${ora}`;
+            } else {
+                elemento.textContent = 'Non sincronizzato';
+            }
+        }
+
+        // ==========================================
+        // NAVIGAZIONE
+        // ==========================================
+        function mostraSezione(sezione, event) {
+            // Nascondi tutte le sezioni
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Mostra sezione selezionata
+            document.getElementById(sezione + '-section').classList.add('active');
+            
+            // Attiva il bottone cliccato
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+            
+            // Carica dati se necessario
+            if (sezione === 'movimenti') {
+                cercaMovimenti();
+            } else if (sezione === 'previsionali') {
+                aggiornaTabellaPrevisionali();
+                calcolaSimulazione();
+            }
+        }
+
+        // ==========================================
+        // AGGIORNAMENTO SISTEMA COMPLETO
+        // ==========================================
+        function aggiornaInteroDashboard() {
+            // 1. Ricalcola tutti i totali
+            let liquiditaTotale = 0;
+            
+            // Calcola liquidità totale
+            Object.values(datiGlobali.saldi).forEach(conto => {
+                liquiditaTotale += conto.saldo;
+            });
+            
+            // Calcola IVA netta da versare (debito - credito)
+            const ivaNettaDaVersare = Math.max(0, datiGlobali.ivaPregressa.debito - datiGlobali.ivaPregressa.credito);
+            
+            // Il disponibile è la liquidità meno l'IVA da versare e le ritenute
+            const disponibileTotale = liquiditaTotale - ivaNettaDaVersare - datiGlobali.ritenute.totale;
+            
+            // 2. Aggiorna indicatori principali dashboard
+            document.getElementById('liquidita-totale').textContent = formatEuro(liquiditaTotale);
+            document.getElementById('disponibile-netto').textContent = formatEuro(disponibileTotale);
+            document.getElementById('iva-totale').textContent = formatEuro(ivaNettaDaVersare);
+            document.getElementById('ritenute-totale').textContent = formatEuro(datiGlobali.ritenute.totale);
+            
+            // Aggiorna dettaglio IVA nella dashboard (mostra debito e credito separati)
+            document.getElementById('dash-iva-debito').textContent = formatEuro(datiGlobali.ivaPregressa.debito).replace('€', '');
+            document.getElementById('dash-iva-credito').textContent = formatEuro(datiGlobali.ivaPregressa.credito).replace('€', '');
+            
+            // 3. Aggiorna grafici saldi aziende
+            const saldiAziende = {
+                'DIGITAL CREDIT': (datiGlobali.saldi['BANCO DI SARDEGNA - DIGITAL CREDIT']?.saldo || 0) + 
+                                  (datiGlobali.saldi['REVOLUT - DIGITAL CREDIT']?.saldo || 0),
+                'FIN UP': (datiGlobali.saldi['BANCO DI SARDEGNA - FIN UP']?.saldo || 0) + 
+                          (datiGlobali.saldi['REVOLUT - FIN UP']?.saldo || 0),
+                'GIERRE': (datiGlobali.saldi['SUM UP - GIERRE']?.saldo || 0)
+            };
+            
+            const maxSaldo = Math.max(...Object.values(saldiAziende), 1000); // Minimo 1000 per evitare divisioni problematiche
+            
+            // Aggiorna barre grafici (gestisci anche valori negativi)
+            const percentualeDigital = Math.max(0, (saldiAziende['DIGITAL CREDIT'] / maxSaldo * 100));
+            const percentualeFinup = Math.max(0, (saldiAziende['FIN UP'] / maxSaldo * 100));
+            const percentualeGierre = Math.max(0, (saldiAziende['GIERRE'] / maxSaldo * 100));
+            
+            document.getElementById('barra-digital').style.width = `${percentualeDigital}%`;
+            document.getElementById('barra-digital').textContent = formatEuro(saldiAziende['DIGITAL CREDIT']);
+            
+            document.getElementById('barra-finup').style.width = `${percentualeFinup}%`;
+            document.getElementById('barra-finup').textContent = formatEuro(saldiAziende['FIN UP']);
+            
+            document.getElementById('barra-gierre').style.width = `${percentualeGierre}%`;
+            document.getElementById('barra-gierre').textContent = formatEuro(saldiAziende['GIERRE']);
+            
+            // 4. Aggiorna riepilogo attività mensili
+            document.getElementById('digital-entrate').textContent = formatEuro(datiGlobali.riepilogo['DIGITAL CREDIT'].entrate);
+            document.getElementById('digital-uscite').textContent = formatEuro(datiGlobali.riepilogo['DIGITAL CREDIT'].uscite);
+            document.getElementById('digital-saldo').textContent = formatEuro(datiGlobali.riepilogo['DIGITAL CREDIT'].entrate - datiGlobali.riepilogo['DIGITAL CREDIT'].uscite);
+            
+            document.getElementById('finup-entrate').textContent = formatEuro(datiGlobali.riepilogo['FIN UP'].entrate);
+            document.getElementById('finup-uscite').textContent = formatEuro(datiGlobali.riepilogo['FIN UP'].uscite);
+            document.getElementById('finup-saldo').textContent = formatEuro(datiGlobali.riepilogo['FIN UP'].entrate - datiGlobali.riepilogo['FIN UP'].uscite);
+            
+            document.getElementById('gierre-entrate').textContent = formatEuro(datiGlobali.riepilogo['GIERRE'].entrate);
+            document.getElementById('gierre-uscite').textContent = formatEuro(datiGlobali.riepilogo['GIERRE'].uscite);
+            document.getElementById('gierre-saldo').textContent = formatEuro(datiGlobali.riepilogo['GIERRE'].entrate - datiGlobali.riepilogo['GIERRE'].uscite);
+            
+            // 5. Aggiorna sezione saldi bancari
+            aggiornaSaldiBancari();
+            
+            // 6. Aggiorna sezione IVA
+            aggiornaSezioneIVA();
+            
+            // 7. Aggiorna altre sezioni
+            aggiornaListaCollaboratori();
+            aggiornaStoricoIva();
+            aggiornaStoricoRitenute();
+        }
+
+        function aggiornaSaldiBancari() {
+            // Digital Credit - Banco
+            const digitalBanco = datiGlobali.saldi['BANCO DI SARDEGNA - DIGITAL CREDIT'] || { saldo: 0, iva: 0 };
+            document.getElementById('digital-banco-saldo').textContent = formatEuro(digitalBanco.saldo);
+            document.getElementById('digital-banco-iva').textContent = formatEuro(digitalBanco.iva);
+            document.getElementById('digital-banco-disponibile').textContent = formatEuro(digitalBanco.saldo - digitalBanco.iva);
+            
+            // Digital Credit - Revolut
+            const digitalRevolut = datiGlobali.saldi['REVOLUT - DIGITAL CREDIT'] || { saldo: 0, iva: 0 };
+            document.getElementById('digital-revolut-saldo').textContent = formatEuro(digitalRevolut.saldo);
+            document.getElementById('digital-revolut-iva').textContent = formatEuro(digitalRevolut.iva);
+            document.getElementById('digital-revolut-disponibile').textContent = formatEuro(digitalRevolut.saldo - digitalRevolut.iva);
+            
+            // FIN UP - Banco
+            const finupBanco = datiGlobali.saldi['BANCO DI SARDEGNA - FIN UP'] || { saldo: 0, iva: 0 };
+            document.getElementById('finup-banco-saldo').textContent = formatEuro(finupBanco.saldo);
+            document.getElementById('finup-banco-iva').textContent = formatEuro(finupBanco.iva);
+            document.getElementById('finup-banco-disponibile').textContent = formatEuro(finupBanco.saldo - finupBanco.iva);
+            
+            // FIN UP - Revolut
+            const finupRevolut = datiGlobali.saldi['REVOLUT - FIN UP'] || { saldo: 0, iva: 0 };
+            document.getElementById('finup-revolut-saldo').textContent = formatEuro(finupRevolut.saldo);
+            document.getElementById('finup-revolut-iva').textContent = formatEuro(finupRevolut.iva);
+            document.getElementById('finup-revolut-disponibile').textContent = formatEuro(finupRevolut.saldo - finupRevolut.iva);
+            
+            // Gierre - Sum Up
+            const gierreSumup = datiGlobali.saldi['SUM UP - GIERRE'] || { saldo: 0, iva: 0 };
+            document.getElementById('gierre-sumup-saldo').textContent = formatEuro(gierreSumup.saldo);
+            document.getElementById('gierre-sumup-iva').textContent = formatEuro(gierreSumup.iva);
+            document.getElementById('gierre-sumup-disponibile').textContent = formatEuro(gierreSumup.saldo - gierreSumup.iva);
+            
+            // Totali generali
+            let liquiditaTotale = 0;
+            Object.values(datiGlobali.saldi).forEach(conto => {
+                liquiditaTotale += conto.saldo;
+            });
+            
+            // Calcola IVA netta da versare
+            const ivaNettaDaVersare = Math.max(0, datiGlobali.ivaPregressa.debito - datiGlobali.ivaPregressa.credito);
+            
+            document.getElementById('saldi-liquidita-totale').textContent = formatEuro(liquiditaTotale);
+            document.getElementById('saldi-iva-totale').textContent = formatEuro(ivaNettaDaVersare);
+            document.getElementById('saldi-disponibile-totale').textContent = formatEuro(liquiditaTotale - ivaNettaDaVersare);
+        }
+
+        function aggiornaSezioneIVA() {
+            // Aggiorna IVA pregressa e calcolo da versare
+            const ivaDebitoPregressa = datiGlobali.ivaPregressa.debito;
+            const ivaCreditoPregressa = datiGlobali.ivaPregressa.credito;
+            const ivaDaVersare = ivaDebitoPregressa - ivaCreditoPregressa;
+            
+            document.getElementById('iva-debito-totale').textContent = formatEuro(ivaDebitoPregressa).replace('€', '');
+            document.getElementById('iva-credito-totale').textContent = formatEuro(ivaCreditoPregressa).replace('€', '');
+            document.getElementById('iva-da-versare').textContent = formatEuro(ivaDaVersare).replace('€', '');
+            
+            // Formatta data scadenza
+            if (datiGlobali.ivaPregressa.scadenza) {
+                const dataScadenza = new Date(datiGlobali.ivaPregressa.scadenza);
+                document.getElementById('data-scadenza-iva').textContent = dataScadenza.toLocaleDateString('it-IT');
+            }
+            
+            // Calcola totali IVA periodo corrente
+            let totaleCredito = 0;
+            let totaleDebito = 0;
+            
+            Object.values(datiGlobali.iva).forEach(azienda => {
+                totaleCredito += azienda.credito;
+                totaleDebito += azienda.debito;
+            });
+            
+            const saldoIva = totaleDebito - totaleCredito;
+            
+            // Aggiorna totali periodo corrente
+            document.getElementById('iva-credito').textContent = formatEuro(totaleCredito);
+            document.getElementById('iva-debito').textContent = formatEuro(totaleDebito);
+            document.getElementById('iva-saldo').textContent = formatEuro(Math.abs(saldoIva));
+            
+            if (saldoIva > 0) {
+                document.getElementById('iva-saldo').className = 'iva-valore iva-debito';
+                document.getElementById('iva-stato').textContent = 'Da pagare';
+            } else if (saldoIva < 0) {
+                document.getElementById('iva-saldo').className = 'iva-valore iva-credito';
+                document.getElementById('iva-stato').textContent = 'A credito';
+            } else {
+                document.getElementById('iva-saldo').className = 'iva-valore iva-saldo';
+                document.getElementById('iva-stato').textContent = 'Pareggio';
+            }
+            
+            // Aggiorna dettagli per azienda
+            const mappingAziende = {
+                'DIGITAL CREDIT': 'digital',
+                'FIN UP': 'finup',
+                'GIERRE': 'gierre'
+            };
+            
+            Object.entries(mappingAziende).forEach(([azienda, prefix]) => {
+                const dati = datiGlobali.iva[azienda];
+                
+                document.getElementById(`${prefix}-iva-credito`).textContent = formatEuro(dati.credito);
+                document.getElementById(`${prefix}-iva-debito`).textContent = formatEuro(dati.debito);
+                document.getElementById(`${prefix}-iva-saldo`).textContent = formatEuro(dati.debito - dati.credito);
+            });
+        }
+
+        // ==========================================
+        // GESTIONE MOVIMENTI
+        // ==========================================
+        function cercaMovimenti() {
+            const tbody = document.getElementById('tbody-movimenti');
+            const count = document.getElementById('count-movimenti');
+            
+            // Ottieni filtri
+            const filtri = {
+                dataDa: document.getElementById('filtro-data-da').value,
+                dataA: document.getElementById('filtro-data-a').value,
+                fornitore: document.getElementById('filtro-fornitore').value.toLowerCase(),
+                tipo: document.getElementById('filtro-tipo').value,
+                banca: document.getElementById('filtro-banca').value.toLowerCase()
+            };
+            
+            // Filtra movimenti
+            datiGlobali.movimentiFiltrati = datiGlobali.movimenti.filter(mov => {
+                // Gestisci date nel formato corretto
+                const dataMovimento = new Date(mov.data).toISOString().split('T')[0];
+                
+                if (filtri.dataDa && dataMovimento < filtri.dataDa) return false;
+                if (filtri.dataA && dataMovimento > filtri.dataA) return false;
+                if (filtri.fornitore && !mov.fornitore.toLowerCase().includes(filtri.fornitore)) return false;
+                if (filtri.tipo && mov.tipo !== filtri.tipo) return false;
+                if (filtri.banca && !mov.banca.toLowerCase().includes(filtri.banca) && 
+                    !mov.categoria.toLowerCase().includes(filtri.banca)) return false;
+                
+                return true;
+            });
+            
+            // Ordina per data decrescente
+            datiGlobali.movimentiFiltrati.sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            // Aggiorna tabella
+            tbody.innerHTML = '';
+            count.textContent = datiGlobali.movimentiFiltrati.length;
+            
+            if (datiGlobali.movimentiFiltrati.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: #6b7280;">
+                            📭 Nessun movimento trovato con i filtri selezionati
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            datiGlobali.movimentiFiltrati.forEach(mov => {
+                const row = document.createElement('tr');
+                const dataFormatted = new Date(mov.data).toLocaleDateString('it-IT');
+                const importoClass = mov.tipo === 'Entrata' ? 'movimento-entrata' : 'movimento-uscita';
+                const importoSign = mov.tipo === 'Entrata' ? '+' : '-';
+                
+                row.innerHTML = `
+                    <td>${dataFormatted}</td>
+                    <td>${mov.banca}</td>
+                    <td>${mov.fornitore}</td>
+                    <td class="${importoClass}">${importoSign}€${Math.abs(mov.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
+                    <td>${mov.tipo}</td>
+                    <td>${mov.categoria}</td>
+                    <td>${mov.note || '-'}</td>
+                    <td>${mov.iva > 0 ? formatEuro(mov.iva) : '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ==========================================
+        // EXPORT EXCEL
+        // ==========================================
+        function esportaExcel() {
+            if (datiGlobali.movimentiFiltrati.length === 0) {
+                mostraErrore('Nessun movimento da esportare! Effettua prima una ricerca.');
+                return;
+            }
+
+            // Prepara i dati per l'export
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Data,Banca,Fornitore/Cliente,Importo,Tipo,Categoria,Note,IVA\n";
+
+            datiGlobali.movimentiFiltrati.forEach(mov => {
+                const dataFormatted = new Date(mov.data).toLocaleDateString('it-IT');
+                const importo = mov.tipo === 'Entrata' ? mov.importo : -mov.importo;
+                
+                csvContent += `${dataFormatted},${mov.banca},"${mov.fornitore}",${importo},${mov.tipo},${mov.categoria || ''},"${mov.note || ''}",${mov.iva || 0}\n`;
+            });
+
+            // Crea e scarica il file
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `movimenti_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            mostraSuccesso(`✅ Export completato! ${datiGlobali.movimentiFiltrati.length} movimenti esportati.`);
+        }
+
+        // ==========================================
+        // GESTIONE IVA
+        // ==========================================
+        function liquidaIVA() {
+            const ivaDaVersare = datiGlobali.ivaPregressa.debito - datiGlobali.ivaPregressa.credito;
+            
+            if (ivaDaVersare <= 0) {
+                mostraErrore('Non ci sono importi IVA da liquidare!');
+                return;
+            }
+            
+            // Chiedi conferma
+            if (!confirm(`Confermi il pagamento dell'IVA per €${formatEuro(ivaDaVersare)}?\n\nVerrà registrato un movimento in uscita.`)) {
+                return;
+            }
+            
+            // Registra il pagamento come movimento
+            const oggi = new Date().toISOString().split('T')[0];
+            const movimento = {
+                data: oggi,
+                banca: 'BANCO DI SARDEGNA - FIN UP', // Conto principale FIN UP
+                fornitore: 'Agenzia delle Entrate - F24',
+                importo: ivaDaVersare,
+                tipo: 'Uscita',
+                categoria: 'FIN UP',
+                iva: 0,
+                note: `Liquidazione IVA periodo ${datiGlobali.ivaPregressa.periodo}`
+            };
+            
+            if (isBackendConnected) {
+                aggiornaSyncIndicator('syncing');
+                
+                // Prima salva il movimento
+                google.script.run
+                    .withSuccessHandler(function() {
+                        // Poi liquida l'IVA
+                        google.script.run
+                            .withSuccessHandler(function() {
+                                mostraSuccesso(`✅ IVA liquidata con successo! Pagamento di €${formatEuro(ivaDaVersare)} registrato.`);
+                                // Ricarica dati
+                                caricaDatiDaBackend();
+                            })
+                            .withFailureHandler(function(error) {
+                                mostraErrore('Errore nella liquidazione IVA: ' + error);
+                                aggiornaSyncIndicator('error');
+                            })
+                            .liquidaIVA(ivaDaVersare, movimento.banca, {
+                                periodo: datiGlobali.ivaPregressa.periodo,
+                                descrizione: movimento.note
+                            });
+                    })
+                    .withFailureHandler(function(error) {
+                        mostraErrore('Errore nel salvataggio movimento: ' + error);
+                        aggiornaSyncIndicator('error');
+                    })
+                    .salvaMovimento(movimento);
+            } else {
+                // Modalità offline
+                datiGlobali.movimenti.push(movimento);
+                datiGlobali.saldi[movimento.banca].saldo -= movimento.importo;
+                datiGlobali.riepilogo['FIN UP'].uscite += movimento.importo;
+                
+                datiGlobali.storicoIva.push({
+                    data: oggi,
+                    periodo: datiGlobali.ivaPregressa.periodo,
+                    importo: ivaDaVersare,
+                    conto: movimento.banca,
+                    note: 'Liquidazione IVA trimestrale'
+                });
+                
+                datiGlobali.ivaPregressa.debito = 0;
+                datiGlobali.ivaPregressa.credito = 0;
+                datiGlobali.ivaPregressa.periodo = 'Nuovo periodo da ' + new Date().toLocaleDateString('it-IT');
+                
+                aggiornaInteroDashboard();
+                mostraSuccesso(`✅ IVA liquidata (modalità offline)! Pagamento di €${formatEuro(ivaDaVersare)} registrato.`);
+            }
+        }
+        
+        function aggiornaStoricoIva() {
+            const tbody = document.getElementById('storico-pagamenti-iva');
+            
+            if (datiGlobali.storicoIva.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">
+                            📭 Nessun pagamento IVA registrato
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            datiGlobali.storicoIva.forEach(pagamento => {
+                const row = document.createElement('tr');
+                const dataFormatted = new Date(pagamento.data).toLocaleDateString('it-IT');
+                
+                row.innerHTML = `
+                    <td>${dataFormatted}</td>
+                    <td>${pagamento.periodo}</td>
+                    <td class="movimento-uscita">€${pagamento.importo.toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
+                    <td>${pagamento.conto}</td>
+                    <td>${pagamento.note}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ==========================================
+        // GESTIONE RITENUTE
+        // ==========================================
+        function aggiornaListaCollaboratori() {
+            const container = document.getElementById('lista-collaboratori');
+            
+            if (datiGlobali.collaboratori.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #6b7280; grid-column: 1 / -1;">
+                        📭 Nessun collaboratore registrato
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            let totaleRitenute = 0;
+            
+            datiGlobali.collaboratori.forEach((collab, index) => {
+                const ritenuta = collab.ritenuta || (collab.compenso * 0.20); // 20% di ritenuta
+                totaleRitenute += ritenuta;
+                
+                const card = document.createElement('div');
+                card.className = 'ritenuta-card';
+                card.innerHTML = `
+                    <div class="ritenuta-header">
+                        <h4 style="color: #1f2937;">${collab.nome}</h4>
+                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="rimuoviCollaboratore(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="ritenuta-dettagli">
+                        <div><strong>Società:</strong> ${collab.societa}</div>
+                        <div><strong>Compenso lordo:</strong> ${formatEuro(collab.compenso)}</div>
+                        <div><strong>Data pagamento:</strong> ${new Date(collab.data).toLocaleDateString('it-IT')}</div>
+                    </div>
+                    <div class="ritenuta-totale">
+                        Ritenuta 20%: ${formatEuro(ritenuta)}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Aggiorna totale ritenute
+            datiGlobali.ritenute.totale = totaleRitenute;
+            document.getElementById('ritenute-totale-da-versare').textContent = formatEuro(totaleRitenute).replace('€', '');
+        }
+
+        function rimuoviCollaboratore(index) {
+            if (confirm('Confermi di voler rimuovere questo collaboratore?')) {
+                if (isBackendConnected) {
+                    aggiornaSyncIndicator('syncing');
+                    google.script.run
+                        .withSuccessHandler(function() {
+                            mostraSuccesso('✅ Collaboratore rimosso con successo!');
+                            caricaDatiDaBackend();
+                        })
+                        .withFailureHandler(function(error) {
+                            mostraErrore('Errore rimozione collaboratore: ' + error);
+                            aggiornaSyncIndicator('error');
+                        })
+                        .rimuoviCollaboratore(index);
+                } else {
+                    datiGlobali.collaboratori.splice(index, 1);
+                    aggiornaListaCollaboratori();
+                    mostraSuccesso('✅ Collaboratore rimosso (modalità offline)!');
+                }
+            }
+        }
+
+        function liquidaRitenute() {
+            if (datiGlobali.ritenute.totale <= 0) {
+                mostraErrore('Non ci sono ritenute da liquidare!');
+                return;
+            }
+            
+            if (!confirm(`Confermi il pagamento delle ritenute per €${formatEuro(datiGlobali.ritenute.totale)}?\n\nVerrà registrato un movimento in uscita.`)) {
+                return;
+            }
+            
+            const oggi = new Date().toISOString().split('T')[0];
+            const movimento = {
+                data: oggi,
+                banca: 'BANCO DI SARDEGNA - FIN UP',
+                fornitore: 'Agenzia delle Entrate - F24 Ritenute',
+                importo: datiGlobali.ritenute.totale,
+                tipo: 'Uscita',
+                categoria: 'FIN UP',
+                iva: 0,
+                note: `Versamento ritenute d'acconto - ${datiGlobali.collaboratori.length} collaboratori`
+            };
+            
+            if (isBackendConnected) {
+                aggiornaSyncIndicator('syncing');
+                
+                // Prima salva il movimento
+                google.script.run
+                    .withSuccessHandler(function() {
+                        // Poi liquida le ritenute
+                        google.script.run
+                            .withSuccessHandler(function() {
+                                mostraSuccesso(`✅ Ritenute liquidate con successo! Pagamento registrato.`);
+                                caricaDatiDaBackend();
+                            })
+                            .withFailureHandler(function(error) {
+                                mostraErrore('Errore liquidazione ritenute: ' + error);
+                                aggiornaSyncIndicator('error');
+                            })
+                            .liquidaRitenute(datiGlobali.ritenute.totale, datiGlobali.collaboratori.length);
+                    })
+                    .withFailureHandler(function(error) {
+                        mostraErrore('Errore nel salvataggio movimento: ' + error);
+                        aggiornaSyncIndicator('error');
+                    })
+                    .salvaMovimento(movimento);
+            } else {
+                // Modalità offline
+                datiGlobali.movimenti.push(movimento);
+                datiGlobali.saldi[movimento.banca].saldo -= movimento.importo;
+                datiGlobali.riepilogo['FIN UP'].uscite += movimento.importo;
+                
+                datiGlobali.storicoRitenute.push({
+                    data: oggi,
+                    periodo: new Date().toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }),
+                    importo: datiGlobali.ritenute.totale,
+                    numeroCollaboratori: datiGlobali.collaboratori.length,
+                    note: 'Versamento ritenute mensile'
+                });
+                
+                datiGlobali.collaboratori = [];
+                datiGlobali.ritenute.totale = 0;
+                
+                aggiornaInteroDashboard();
+                mostraSuccesso(`✅ Ritenute liquidate (modalità offline)! Pagamento registrato.`);
+            }
+        }
+
+        function aggiornaStoricoRitenute() {
+            const tbody = document.getElementById('storico-pagamenti-ritenute');
+            
+            if (datiGlobali.storicoRitenute.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">
+                            📭 Nessun pagamento ritenute registrato
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            datiGlobali.storicoRitenute.forEach(pagamento => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(pagamento.data).toLocaleDateString('it-IT')}</td>
+                    <td>${pagamento.periodo}</td>
+                    <td class="movimento-uscita">${formatEuro(pagamento.importo)}</td>
+                    <td>${pagamento.numeroCollaboratori}</td>
+                    <td>${pagamento.note}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ==========================================
+        // GESTIONE PREVISIONALI
+        // ==========================================
+        function aggiornaTabellaPrevisionali() {
+            const tbody = document.getElementById('tbody-previsionali');
+            
+            if (datiGlobali.previsionali.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: #6b7280;">
+                            📭 Nessun movimento previsionale inserito
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            datiGlobali.previsionali.forEach((prev, index) => {
+                const row = document.createElement('tr');
+                const dataFormatted = new Date(prev.data).toLocaleDateString('it-IT');
+                const importoClass = prev.tipo === 'Entrata' ? 'movimento-entrata' : 'movimento-uscita';
+                const importoSign = prev.tipo === 'Entrata' ? '+' : '-';
+                
+                row.innerHTML = `
+                    <td>${dataFormatted}</td>
+                    <td>${prev.societa}</td>
+                    <td>${prev.descrizione || '-'}</td>
+                    <td class="${importoClass}">${importoSign}€${Math.abs(prev.importo).toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
+                    <td>${prev.tipo}</td>
+                    <td>${prev.probabilita}%</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="rimuoviPrevisionale(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function rimuoviPrevisionale(index) {
+            if (isBackendConnected) {
+                aggiornaSyncIndicator('syncing');
+                google.script.run
+                    .withSuccessHandler(function() {
+                        mostraSuccesso('✅ Previsionale rimosso!');
+                        caricaDatiDaBackend();
+                    })
+                    .withFailureHandler(function(error) {
+                        mostraErrore('Errore rimozione previsionale: ' + error);
+                        aggiornaSyncIndicator('error');
+                    })
+                    .rimuoviPrevisionale(index);
+            } else {
+                datiGlobali.previsionali.splice(index, 1);
+                aggiornaTabellaPrevisionali();
+                calcolaSimulazione();
+                mostraSuccesso('✅ Previsionale rimosso (modalità offline)!');
+            }
+        }
+
+        function calcolaSimulazione() {
+            // Calcola saldi attuali per società
+            const saldiAttuali = {
+                'DIGITAL CREDIT': (datiGlobali.saldi['BANCO DI SARDEGNA - DIGITAL CREDIT']?.saldo || 0) + 
+                                  (datiGlobali.saldi['REVOLUT - DIGITAL CREDIT']?.saldo || 0),
+                'FIN UP': (datiGlobali.saldi['BANCO DI SARDEGNA - FIN UP']?.saldo || 0) + 
+                          (datiGlobali.saldi['REVOLUT - FIN UP']?.saldo || 0),
+                'GIERRE': (datiGlobali.saldi['SUM UP - GIERRE']?.saldo || 0)
+            };
+            
+            // Aggiungi previsionali pesati per probabilità
+            const saldiFuturi = { ...saldiAttuali };
+            
+            datiGlobali.previsionali.forEach(prev => {
+                const importoPesato = prev.importo * (prev.probabilita / 100);
+                if (prev.tipo === 'Entrata') {
+                    saldiFuturi[prev.societa] += importoPesato;
+                } else {
+                    saldiFuturi[prev.societa] -= importoPesato;
+                }
+            });
+            
+            // Aggiorna visualizzazione
+            document.getElementById('sim-digital').textContent = formatEuro(saldiFuturi['DIGITAL CREDIT']);
+            document.getElementById('sim-digital').className = saldiFuturi['DIGITAL CREDIT'] >= 0 ? 'simulazione-valore valore-positivo' : 'simulazione-valore valore-negativo';
+            
+            document.getElementById('sim-finup').textContent = formatEuro(saldiFuturi['FIN UP']);
+            document.getElementById('sim-finup').className = saldiFuturi['FIN UP'] >= 0 ? 'simulazione-valore valore-positivo' : 'simulazione-valore valore-negativo';
+            
+            document.getElementById('sim-gierre').textContent = formatEuro(saldiFuturi['GIERRE']);
+            document.getElementById('sim-gierre').className = saldiFuturi['GIERRE'] >= 0 ? 'simulazione-valore valore-positivo' : 'simulazione-valore valore-negativo';
+            
+            const totale = saldiFuturi['DIGITAL CREDIT'] + saldiFuturi['FIN UP'] + saldiFuturi['GIERRE'];
+            document.getElementById('sim-totale').textContent = formatEuro(totale);
+        }
+
+        function resettaPrevisionale() {
+            if (confirm('Confermi di voler resettare tutti i movimenti previsionali?')) {
+                if (isBackendConnected) {
+                    aggiornaSyncIndicator('syncing');
+                    google.script.run
+                        .withSuccessHandler(function() {
+                            mostraSuccesso('✅ Previsionale resettato!');
+                            caricaDatiDaBackend();
+                        })
+                        .withFailureHandler(function(error) {
+                            mostraErrore('Errore reset previsionale: ' + error);
+                            aggiornaSyncIndicator('error');
+                        })
+                        .resettaPrevisionali();
+                } else {
+                    datiGlobali.previsionali = [];
+                    aggiornaTabellaPrevisionali();
+                    calcolaSimulazione();
+                    mostraSuccesso('✅ Previsionale resettato (modalità offline)!');
+                }
+            }
+        }
+
+        // ==========================================
+        // GESTIONE FORM MOVIMENTO
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form IVA pregressa
+            document.getElementById('form-iva-pregressa').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const creditoPregressa = parseFloat(document.getElementById('iva-credito-pregressa').value) || 0;
+                const periodoRiferimento = document.getElementById('iva-periodo-riferimento').value;
+                const prossimaScadenza = document.getElementById('iva-prossima-scadenza').value;
+                
+                if (isBackendConnected) {
+                    aggiornaSyncIndicator('syncing');
+                    google.script.run
+                        .withSuccessHandler(function() {
+                            mostraSuccesso(`✅ IVA pregressa aggiornata! Credito: €${formatEuro(creditoPregressa)}`);
+                            caricaDatiDaBackend();
+                        })
+                        .withFailureHandler(function(error) {
+                            mostraErrore('Errore aggiornamento IVA: ' + error);
+                            aggiornaSyncIndicator('error');
+                        })
+                        .aggiornaIvaPregressa(creditoPregressa, periodoRiferimento, prossimaScadenza);
+                } else {
+                    // Modalità offline
+                    datiGlobali.ivaPregressa.credito = creditoPregressa;
+                    datiGlobali.ivaPregressa.periodo = periodoRiferimento;
+                    datiGlobali.ivaPregressa.scadenza = prossimaScadenza;
+                    
+                    aggiornaSezioneIVA();
+                    aggiornaInteroDashboard();
+                    
+                    mostraSuccesso(`✅ IVA pregressa aggiornata (modalità offline)! Credito: €${formatEuro(creditoPregressa)}`);
+                }
+            });
+            
+            // Calcolo automatico IVA
+            document.getElementById('movimento-iva-applicata').addEventListener('change', function() {
+                const importo = parseFloat(document.getElementById('movimento-importo').value) || 0;
+                const conIva = this.value === 'si';
+                
+                if (conIva && importo > 0) {
+                    const iva = importo * 0.22;
+                    document.getElementById('movimento-iva-importo').value = iva.toFixed(2);
+                } else {
+                    document.getElementById('movimento-iva-importo').value = '';
+                }
+            });
+            
+            document.getElementById('movimento-importo').addEventListener('input', function() {
+                const importo = parseFloat(this.value) || 0;
+                const conIva = document.getElementById('movimento-iva-applicata').value === 'si';
+                
+                if (conIva && importo > 0) {
+                    const iva = importo * 0.22;
+                    document.getElementById('movimento-iva-importo').value = iva.toFixed(2);
+                } else {
+                    document.getElementById('movimento-iva-importo').value = '';
+                }
+            });
+
+            // Form movimento bancario
+            document.getElementById('form-movimento').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const movimento = {
+                    data: document.getElementById('movimento-data').value,
+                    banca: document.getElementById('movimento-banca').value,
+                    fornitore: document.getElementById('movimento-fornitore').value,
+                    importo: parseFloat(document.getElementById('movimento-importo').value),
+                    tipo: document.getElementById('movimento-tipo').value,
+                    categoria: document.getElementById('movimento-categoria').value || determinaCategoria(document.getElementById('movimento-banca').value),
+                    iva: parseFloat(document.getElementById('movimento-iva-importo').value) || 0,
+                    note: document.getElementById('movimento-note').value
+                };
+                
+                // Disabilita il bottone per evitare doppi invii
+                const btnSalva = document.getElementById('btn-salva-movimento');
+                btnSalva.disabled = true;
+                
+                if (isBackendConnected) {
+                    aggiornaSyncIndicator('syncing');
+                    google.script.run
+                        .withSuccessHandler(function(result) {
+                            mostraSuccesso(`✅ Movimento registrato con successo! ${movimento.tipo} di €${movimento.importo.toFixed(2)} - ${movimento.fornitore}`);
+                            
+                            // Reset form
+                            document.getElementById('form-movimento').reset();
+                            document.getElementById('movimento-data').value = new Date().toISOString().split('T')[0];
+                            document.getElementById('movimento-iva-importo').value = '';
+                            
+                            btnSalva.disabled = false;
+                            
+                            // Ricarica dati
+                            caricaDatiDaBackend();
+                        })
+                        .withFailureHandler(function(error) {
+                            mostraErrore('Errore nel salvataggio: ' + error);
+                            aggiornaSyncIndicator('error');
+                            btnSalva.disabled = false;
+                        })
+                        .salvaMovimento(movimento);
+                } else {
+                    // Modalità offline
+                    datiGlobali.movimenti.push(movimento);
+                    
+                    if (movimento.tipo === 'Entrata') {
+                        datiGlobali.saldi[movimento.banca].saldo += movimento.importo;
+                    } else {
+                        datiGlobali.saldi[movimento.banca].saldo -= movimento.importo;
+                    }
+                    
+                    const azienda = determinaAzienda(movimento.banca);
+                    if (movimento.tipo === 'Entrata') {
+                        datiGlobali.riepilogo[azienda].entrate += movimento.importo;
+                        if (movimento.iva > 0) {
+                            datiGlobali.iva[azienda].debito += movimento.iva;
+                        }
+                    } else {
+                        datiGlobali.riepilogo[azienda].uscite += movimento.importo;
+                        if (movimento.iva > 0) {
+                            datiGlobali.iva[azienda].credito += movimento.iva;
+                        }
+                    }
+                    
+                    aggiornaInteroDashboard();
+                    
+                    mostraSuccesso(`✅ Movimento registrato (modalità offline)! ${movimento.tipo} di €${movimento.importo.toFixed(2)} - ${movimento.fornitore}`);
+                    
+                    // Reset form
+                    this.reset();
+                    document.getElementById('movimento-data').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('movimento-iva-importo').value = '';
+                    btnSalva.disabled = false;
+                    
+                    if (document.getElementById('movimenti-section').classList.contains('active')) {
+                        cercaMovimenti();
+                    }
+                }
+            });
+
+            // Form collaboratore
+            document.getElementById('form-collaboratore').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const collaboratore = {
+                    nome: document.getElementById('collab-nome').value,
+                    societa: document.getElementById('collab-societa').value,
+                    compenso: parseFloat(document.getElementById('collab-compenso').value),
+                    data: document.getElementById('collab-data').value
+                };
+                
+                if (isBackendConnected) {
+                    aggiornaSyncIndicator('syncing');
+                    google.script.run
+                        .withSuccessHandler(function(result) {
+                            mostraSuccesso(`✅ Collaboratore ${collaboratore.nome} registrato con successo!`);
+                            
+                            // Reset form
+                            document.getElementById('form-collaboratore').reset();
+                            document.getElementById('collab-data').value = new Date().toISOString().split('T')[0];
+                            
+                            caricaDatiDaBackend();
+                        })
+                        .withFailureHandler(function(error) {
+                            mostraErrore('Errore salvataggio collaboratore: ' + error);
+                            aggiornaSyncIndicator('error');
+                        })
+                        .salvaCollaboratore(collaboratore);
+                } else {
+                    // Modalità offline
+                    datiGlobali.collaboratori.push(collaboratore);
+                    aggiornaListaCollaboratori();
+                    
+                    // Reset form
+                    this.reset();
+                    document.getElementById('collab-data').value = new Date().toISOString().split('T')[0];
+                    
+                    mostraSuccesso(`✅ Collaboratore ${collaboratore.nome} registrato (modalità offline)!`);
+                }
+            });
+
+            // Form previsionale
+            document.getElementById('form-previsionale').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const previsionale = {
+                    societa: document.getElementById('prev-societa').value,
+                    tipo: document.getElementById('prev-tipo').value,
+                    importo: parseFloat(document.getElementById('prev-importo').value),
+                    data: document.getElementById('prev-data').value,
+                    descrizione: document.getElementById('prev-descrizione').value,
+                    probabilita: parseInt(document.getElementById('prev-probabilita').value)
+                };
+                
+                if (isBackendConnected) {
+                    aggiornaSyncIndicator('syncing');
+                    google.script.run
+                        .withSuccessHandler(function() {
+                            mostraSuccesso(`✅ Previsionale aggiunto con successo!`);
+                            
+                            // Reset form
+                            document.getElementById('form-previsionale').reset();
+                            document.getElementById('prev-data').value = new Date().toISOString().split('T')[0];
+                            
+                            caricaDatiDaBackend();
+                        })
+                        .withFailureHandler(function(error) {
+                            mostraErrore('Errore salvataggio previsionale: ' + error);
+                            aggiornaSyncIndicator('error');
+                        })
+                        .salvaPrevisionale(previsionale);
+                } else {
+                    // Modalità offline
+                    datiGlobali.previsionali.push(previsionale);
+                    aggiornaTabellaPrevisionali();
+                    calcolaSimulazione();
+                    
+                    // Reset form
+                    this.reset();
+                    document.getElementById('prev-data').value = new Date().toISOString().split('T')[0];
+                    
+                    mostraSuccesso(`✅ Previsionale aggiunto (modalità offline)!`);
+                }
+            });
+        });
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+        function formatEuro(numero) {
+            return '€' + Math.abs(numero).toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function determinaAzienda(banca) {
+            if (banca.includes('DIGITAL CREDIT')) return 'DIGITAL CREDIT';
+            if (banca.includes('FIN UP')) return 'FIN UP';
+            if (banca.includes('GIERRE')) return 'GIERRE';
+            return 'DIGITAL CREDIT';
+        }
+
+        function determinaCategoria(banca) {
+            if (banca.includes('DIGITAL CREDIT')) return 'Digital Credit Italia SRL';
+            if (banca.includes('FIN UP')) return 'FIN UP';
+            if (banca.includes('GIERRE')) return 'Gierre SRL';
+            return 'Generale';
+        }
+
+        function mostraSuccesso(messaggio) {
+            const element = document.getElementById('success-message');
+            element.textContent = messaggio;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 5000);
+            
+            // Mostra anche notifica floating
+            mostraNotifica(messaggio, 'success');
+        }
+
+        function mostraErrore(messaggio) {
+            const element = document.getElementById('error-message');
+            element.textContent = '❌ ' + messaggio;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 5000);
+            
+            // Mostra anche notifica floating
+            mostraNotifica('❌ ' + messaggio, 'error');
+        }
+
+        // ==========================================
+        // INIZIALIZZAZIONE
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Avvio sistema contabilità...');
+            
+            // Imposta data odierna nei form
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('movimento-data').value = today;
+            document.getElementById('collab-data').value = today;
+            document.getElementById('prev-data').value = today;
+            
+            // Controlla connessione backend
+            setTimeout(function() {
+                checkBackendConnection();
+            }, 1000);
+            
+            // Inizializza il sistema
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                // Prima inizializza lo sheet se necessario
+                google.script.run
+                    .withSuccessHandler(function(result) {
+                        console.log('✅ Sheet inizializzato:', result);
+                    })
+                    .withFailureHandler(function(error) {
+                        console.error('⚠️ Errore inizializzazione sheet:', error);
+                    })
+                    .inizializzaSheet();
+            }
+        });
+
+        // Gestione chiusura pagina
+        window.addEventListener('beforeunload', function() {
+            if (datiGlobali.autoRefreshInterval) {
+                clearInterval(datiGlobali.autoRefreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>
